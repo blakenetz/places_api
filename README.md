@@ -1,2 +1,3 @@
-# places_api
+# Places API
+
 API to gather information for a given place

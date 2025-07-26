@@ -1,0 +1,21 @@
+{
+  "name": "places_api",
+  "version": "1.0.0",
+  "description": "API to gather information for a given place",
+  "main": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "places",
+    "api",
+    "places-api"
+  ],
+  "author": "Blake Netzeband <blake.netzeband@gmail.com> (https://blakenetzeband.com)",
+  "license": "ISC",
+  "packageManager": "pnpm@10.6.0",
+  "devDependencies": {
+    "@types/node": "^22.13.10"
+  }
+}
