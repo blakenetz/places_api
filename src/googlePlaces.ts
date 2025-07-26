@@ -52,3 +52,5 @@ async function getBusinessDetailsGoogle(
     return null;
   }
 }
+
+export default getBusinessDetailsGoogle;

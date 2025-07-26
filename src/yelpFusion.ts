@@ -31,3 +31,5 @@ async function getBusinessDetailsYelp(businessName: string, location: string) {
     return null;
   }
 }
+
+export default getBusinessDetailsYelp;
