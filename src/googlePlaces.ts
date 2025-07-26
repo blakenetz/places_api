@@ -1,4 +1,13 @@
-const GOOGLE_API_KEY = "YOUR_GOOGLE_API_KEY";
+import dotenv from "dotenv";
+
+// Load environment variables
+dotenv.config();
+
+const GOOGLE_API_KEY = process.env.GOOGLE_PLACES_API_KEY;
+
+if (!GOOGLE_API_KEY) {
+  throw new Error("GOOGLE_PLACES_API_KEY environment variable is required");
+}
 
 async function getBusinessDetailsGoogle(
   businessName: string,

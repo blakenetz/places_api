@@ -1,5 +1,4 @@
 import getBusinessDetailsGoogle from "./googlePlaces.js";
-import getBusinessDetailsYelp from "./yelpFusion.js";
 import prompts from "prompts";
 
 // CLI functionality
@@ -17,10 +16,8 @@ async function main() {
 
       if (command === "google") {
         result = await getBusinessDetailsGoogle(businessName, location);
-      } else if (command === "yelp") {
-        result = await getBusinessDetailsYelp(businessName, location);
       } else {
-        console.error('Invalid command. Use "google" or "yelp"');
+        console.error('Invalid command. Use "google"');
         process.exit(1);
       }
 
@@ -40,15 +37,6 @@ async function main() {
   try {
     const response = await prompts([
       {
-        type: "select",
-        name: "service",
-        message: "Which service would you like to use?",
-        choices: [
-          { title: "Google Places API", value: "google" },
-          { title: "Yelp Fusion API", value: "yelp" },
-        ],
-      },
-      {
         type: "text",
         name: "businessName",
         message: "Enter the business name:",
@@ -63,31 +51,19 @@ async function main() {
       },
     ]);
 
-    if (!response.service || !response.businessName || !response.location) {
+    if (!response.businessName || !response.location) {
       console.log("Operation cancelled");
       return;
     }
 
     console.log(
-      `\nSearching for "${response.businessName}" in "${
-        response.location
-      }" using ${
-        response.service === "google" ? "Google Places" : "Yelp Fusion"
-      }...\n`
+      `\nSearching for "${response.businessName}" in "${response.location}" using Google Places...\n`
     );
 
-    let result;
-    if (response.service === "google") {
-      result = await getBusinessDetailsGoogle(
-        response.businessName,
-        response.location
-      );
-    } else {
-      result = await getBusinessDetailsYelp(
-        response.businessName,
-        response.location
-      );
-    }
+    const result = await getBusinessDetailsGoogle(
+      response.businessName,
+      response.location
+    );
 
     if (result) {
       console.log("✅ Business found!");
@@ -106,4 +82,4 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   main();
 }
 
-export { getBusinessDetailsGoogle, getBusinessDetailsYelp };
+export { getBusinessDetailsGoogle };
