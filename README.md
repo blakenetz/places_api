@@ -1,6 +1,6 @@
 # Places API
 
-API to gather information for a given place using Google Places API.
+API to gather information for businesses in Denver, Colorado using Google Places API.
 
 ## Setup
 
@@ -29,7 +29,7 @@ pnpm run search
 
 ```bash
 # Google Places API
-pnpm run google "Business Name" "Location"
+pnpm run google "Business Name"
 ```
 
 ## API Keys

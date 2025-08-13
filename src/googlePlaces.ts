@@ -9,52 +9,55 @@ if (!GOOGLE_API_KEY) {
   throw new Error("GOOGLE_PLACES_API_KEY environment variable is required");
 }
 
-async function getBusinessDetailsGoogle(
-  businessName: string,
-  location: string
-) {
+async function getBusinessDetailsGoogle(businessName: string) {
   try {
-    // 1. Get Place ID from a Text Search
-    const textSearchUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json`;
-    const response = await fetch(textSearchUrl, {
-      method: "GET",
+    // Use the new Google Places API v1 endpoint
+    const searchUrl = new URL(
+      "https://places.googleapis.com/v1/places:searchText"
+    );
+    searchUrl.searchParams.append("key", GOOGLE_API_KEY!);
+
+    const searchQuery = `${businessName} Denver, Colorado`;
+
+    const response = await fetch(searchUrl.toString(), {
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "X-Goog-Api-Key": GOOGLE_API_KEY!,
+        "X-Goog-FieldMask":
+          "places.displayName,places.formattedAddress,places.internationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.types,places.businessStatus,places.openingHours",
       },
       body: JSON.stringify({
-        query: `${businessName} ${location}`,
-        key: GOOGLE_API_KEY,
+        textQuery: searchQuery,
+        maxResultCount: 1,
       }),
     });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `HTTP error! status: ${response.status}, body: ${errorText}`
+      );
+    }
 
     const data = await response.json();
 
-    const place = data.results[0];
-    if (!place) throw new Error("Business not found");
+    if (!data.places || data.places.length === 0) {
+      throw new Error("Business not found");
+    }
 
-    const placeId = place.place_id;
-
-    // 2. Get Place Details
-    const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json`;
-    const detailsResp = await fetch(detailsUrl, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        place_id: placeId,
-        key: GOOGLE_API_KEY,
-        fields: "name,formatted_address,formatted_phone_number,website",
-      }),
-    });
-
-    const details = await detailsResp.json();
+    const place = data.places[0];
 
     return {
-      name: details.name,
-      address: details.formatted_address,
-      phone: details.formatted_phone_number,
-      website: details.website,
+      name: place.displayName?.text || "N/A",
+      address: place.formattedAddress || "N/A",
+      phone: place.internationalPhoneNumber || "N/A",
+      website: place.websiteUri || "N/A",
+      rating: place.rating || null,
+      totalRatings: place.userRatingCount || null,
+      businessStatus: place.businessStatus || null,
+      types: place.types || [],
+      openingHours: place.openingHours?.weekdayDescriptions || null,
     };
   } catch (error) {
     console.error("Error fetching Google business details:", error);
