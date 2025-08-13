@@ -1,5 +1,7 @@
 import prompts from "prompts";
 import getBusinessDetailsGoogle from "./googlePlaces";
+import { BusinessResult } from "@/types";
+import { log, error } from "@/utils";
 
 export async function getBusinessNamePrompt(): Promise<string | null> {
   try {
@@ -14,14 +16,14 @@ export async function getBusinessNamePrompt(): Promise<string | null> {
     ]);
 
     if (!response.businessName) {
-      console.log("Operation cancelled");
+      log("Operation cancelled");
       return null;
     }
 
     return response.businessName;
-  } catch (error) {
-    console.error("Error:", error);
-    throw error;
+  } catch (err) {
+    error("Error:", err);
+    throw err;
   }
 }
 
@@ -34,20 +36,22 @@ export async function main() {
       return;
     }
 
-    console.log(
-      `\nSearching for "${businessName}" in Denver, Colorado using Google Places...\n`
+    log(
+      `Searching for "${businessName}" in Denver, Colorado using Google Places...\n`
     );
 
-    const result = await getBusinessDetailsGoogle(businessName);
+    const result: BusinessResult[] | null = await getBusinessDetailsGoogle(
+      businessName
+    );
 
-    if (result) {
-      console.log("✅ Business found!");
-      console.log(JSON.stringify(result, null, 2));
+    if (result && result.length > 0) {
+      log("✅ Business found!");
+      log(JSON.stringify(result, null, 2));
     } else {
-      console.log("❌ No results found");
+      log("❌ No results found");
     }
-  } catch (error) {
-    console.error("Error:", error);
+  } catch (err) {
+    error("Error:", err);
     process.exit(1);
   }
 }

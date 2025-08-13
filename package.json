@@ -1,26 +1,36 @@
 {
   "name": "denver_places",
   "version": "1.0.0",
-  "description": "API to gather information for businesses in Denver, Colorado",
+  "description": "A Node.js application to gather business information for companies in Denver, Colorado using the Google Places API",
   "main": "src/index.ts",
   "type": "module",
   "scripts": {
-    "prompt": "tsx src/prompt.ts",
-    "csv": "tsx src/csv.ts"
+    "prompt": "tsx --require tsconfig-paths/register src/prompt.ts",
+    "csv": "tsx --require tsconfig-paths/register src/csv.ts",
+    "build": "tsc",
+    "dev": "tsx --require tsconfig-paths/register --watch src/prompt.ts",
+    "clean": "rm -rf dist build",
+    "type-check": "tsc --noEmit"
   },
   "keywords": [
     "denver",
     "places",
     "api",
-    "denver-places",
-    "colorado"
+    "google-places",
+    "colorado",
+    "business-search",
+    "csv-processing"
   ],
   "author": "Blake Netzeband <blake.netzeband@gmail.com> (https://blakenetzeband.com)",
   "license": "ISC",
   "packageManager": "pnpm@10.6.0",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "devDependencies": {
     "@types/node": "^22.16.5",
     "@types/prompts": "^2.4.9",
+    "tsconfig-paths": "^4.2.0",
     "tsx": "^4.20.3",
     "typescript": "^5.8.3"
   },

@@ -1,11 +1,17 @@
 import getBusinessDetailsGoogle from "./googlePlaces";
+import { BusinessResult } from "@/types";
+import { log, error, batch, processing, success, waiting } from "@/utils";
 import fs from "fs";
 import path from "path";
+
+// CSV processing constants
+const BATCH_SIZE = 5;
+const DELAY_BETWEEN_BATCHES = 1000;
 
 // CSV processing functionality
 export async function processCSVFile(csvFilePath: string) {
   try {
-    console.log(`\nProcessing CSV file: ${csvFilePath}\n`);
+    log(`Processing CSV file: ${csvFilePath}\n`);
 
     const csvContent = fs.readFileSync(csvFilePath, "utf-8");
     const lines = csvContent.split("\n").filter((line) => line.trim());
@@ -15,7 +21,12 @@ export async function processCSVFile(csvFilePath: string) {
     }
 
     // Parse headers and validate required columns
-    const headers = lines[0].split(",").map((h) => h.toLowerCase().trim());
+    const headerLine = lines[0];
+    if (!headerLine) {
+      throw new Error("CSV file has no header line");
+    }
+
+    const headers = headerLine.split(",").map((h) => h.toLowerCase().trim());
     const requiredHeaders = ["company", "email", "phone"];
 
     const missingHeaders = requiredHeaders.filter(
@@ -34,54 +45,51 @@ export async function processCSVFile(csvFilePath: string) {
     const emailIndex = headers.indexOf("email");
     const phoneIndex = headers.indexOf("phone");
 
+    // Validate that all required columns were found
+    if (companyIndex === -1 || emailIndex === -1 || phoneIndex === -1) {
+      throw new Error("Required columns not found in CSV headers");
+    }
+
     // Skip header row and process data
     const dataLines = lines.slice(1);
 
-    console.log(`Found ${dataLines.length} business names to process\n`);
+    log(`Found ${dataLines.length} business names to process\n`);
 
-    const results: Array<{
-      businessName: string;
-      address: string;
-      phoneNumber: string;
-    }> = [];
-    const batchSize = 5; // Process 5 businesses concurrently
-    const delayBetweenBatches = 1000; // 1 second delay between batches
+    const results: BusinessResult[] = [];
 
     // Process in batches
-    for (let i = 0; i < dataLines.length; i += batchSize) {
-      const batch = dataLines.slice(i, i + batchSize);
-      const batchNumber = Math.floor(i / batchSize) + 1;
-      const totalBatches = Math.ceil(dataLines.length / batchSize);
+    for (let i = 0; i < dataLines.length; i += BATCH_SIZE) {
+      const batchData = dataLines.slice(i, i + BATCH_SIZE);
+      const batchNumber = Math.floor(i / BATCH_SIZE) + 1;
+      const totalBatches = Math.ceil(dataLines.length / BATCH_SIZE);
 
-      console.log(
-        `\n📦 Processing batch ${batchNumber}/${totalBatches} (${batch.length} businesses)`
+      batch(
+        `Processing batch ${batchNumber}/${totalBatches} (${batchData.length} businesses)`
       );
 
       // Process batch concurrently
-      const batchPromises = batch.map(async (line, batchIndex) => {
+      const batchPromises = batchData.map(async (line, batchIndex) => {
         const columns = line.split(",").map((col) => col.trim());
         const businessName = columns[companyIndex] || "";
 
         if (!businessName) return null;
 
         const globalIndex = i + batchIndex;
-        console.log(
-          `  Processing ${globalIndex + 1}/${
-            dataLines.length
-          }: "${businessName}"`
+        processing(
+          `Processing ${globalIndex + 1}/${dataLines.length}: "${businessName}"`
         );
 
         try {
           const result = await getBusinessDetailsGoogle(businessName);
           if (result) {
-            console.log(`    ✅ Found ${result.length} result(s)`);
+            success(`Found ${result.length} result(s)`);
             return result;
           } else {
-            console.log(`    ❌ No results found`);
+            log(`No results found`);
             return null;
           }
-        } catch (error) {
-          console.error(`    ❌ Error processing "${businessName}":`, error);
+        } catch (err) {
+          error(`Error processing "${businessName}":`, err);
           return null;
         }
       });
@@ -97,10 +105,10 @@ export async function processCSVFile(csvFilePath: string) {
       });
 
       // Delay between batches to avoid hitting rate limits
-      if (i + batchSize < dataLines.length) {
-        console.log(`⏳ Waiting ${delayBetweenBatches}ms before next batch...`);
+      if (i + BATCH_SIZE < dataLines.length) {
+        waiting(`Waiting ${DELAY_BETWEEN_BATCHES}ms before next batch...`);
         await new Promise((resolve) =>
-          setTimeout(resolve, delayBetweenBatches)
+          setTimeout(resolve, DELAY_BETWEEN_BATCHES)
         );
       }
     }
@@ -118,11 +126,11 @@ export async function processCSVFile(csvFilePath: string) {
     ].join("\n");
 
     fs.writeFileSync(outputPath, csvOutput);
-    console.log(`\n✅ Results saved to: ${outputPath}`);
-    console.log(`Total results: ${results.length}`);
-  } catch (error) {
-    console.error("Error processing CSV file:", error);
-    throw error;
+    success(`Results saved to: ${outputPath}`);
+    log(`Total results: ${results.length}`);
+  } catch (err) {
+    error("Error processing CSV file:", err);
+    throw err;
   }
 }
 
@@ -131,21 +139,21 @@ export async function main() {
   const args = process.argv.slice(2);
 
   if (args.length < 2 || args[0] !== "--file") {
-    console.error("Usage: csv --file <filename>");
-    console.error("Example: csv --file ~/path/to/file.csv");
+    error("Usage: csv --file <filename>");
+    error("Example: csv --file ~/path/to/file.csv");
     process.exit(1);
   }
 
   const csvPath = args[1];
-  if (!fs.existsSync(csvPath)) {
-    console.error(`❌ CSV file not found: ${csvPath}`);
+  if (!csvPath || !fs.existsSync(csvPath)) {
+    error(`CSV file not found: ${csvPath}`);
     process.exit(1);
   }
 
   try {
     await processCSVFile(csvPath);
-  } catch (error) {
-    console.error("Error:", error);
+  } catch (err) {
+    error("Error:", err);
     process.exit(1);
   }
 }
