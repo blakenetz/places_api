@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const GOOGLE_API_KEY = process.env.GOOGLE_PLACES_API_KEY;
+const maxResults = 20;
 
 if (!GOOGLE_API_KEY) {
   throw new Error("GOOGLE_PLACES_API_KEY environment variable is required");
@@ -25,11 +26,11 @@ async function getBusinessDetailsGoogle(businessName: string) {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": GOOGLE_API_KEY!,
         "X-Goog-FieldMask":
-          "places.displayName,places.formattedAddress,places.internationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.types,places.businessStatus,places.openingHours",
+          "places.displayName,places.formattedAddress,places.internationalPhoneNumber",
       },
       body: JSON.stringify({
         textQuery: searchQuery,
-        maxResultCount: 1,
+        maxResultCount: maxResults, // Return up to 20 places
       }),
     });
 
@@ -43,22 +44,18 @@ async function getBusinessDetailsGoogle(businessName: string) {
     const data = await response.json();
 
     if (!data.places || data.places.length === 0) {
-      throw new Error("Business not found");
+      throw new Error("No businesses found");
+    }
+    if (data.places.length === maxResults) {
+      console.log("Max results reached, returning partial results");
     }
 
-    const place = data.places[0];
-
-    return {
-      name: place.displayName?.text || "N/A",
-      address: place.formattedAddress || "N/A",
-      phone: place.internationalPhoneNumber || "N/A",
-      website: place.websiteUri || "N/A",
-      rating: place.rating || null,
-      totalRatings: place.userRatingCount || null,
-      businessStatus: place.businessStatus || null,
-      types: place.types || [],
-      openingHours: place.openingHours?.weekdayDescriptions || null,
-    };
+    // Return all places found
+    return data.places.map((place: any) => ({
+      businessName: place.displayName?.text || businessName,
+      address: place.formattedAddress || "",
+      phoneNumber: place.internationalPhoneNumber || "",
+    }));
   } catch (error) {
     console.error("Error fetching Google business details:", error);
     return null;
