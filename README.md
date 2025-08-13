@@ -1,4 +1,4 @@
-# Places API
+# Denver Places
 
 API to gather information for businesses in Denver, Colorado using Google Places API.
 

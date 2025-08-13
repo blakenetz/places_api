@@ -1,7 +1,7 @@
 {
-  "name": "places_api",
+  "name": "denver_places",
   "version": "1.0.0",
-  "description": "API to gather information for a given place",
+  "description": "API to gather information for businesses in Denver, Colorado",
   "main": "src/index.ts",
   "type": "module",
   "scripts": {
@@ -10,9 +10,11 @@
     "search": "tsx src/index.ts"
   },
   "keywords": [
+    "denver",
     "places",
     "api",
-    "places-api"
+    "denver-places",
+    "colorado"
   ],
   "author": "Blake Netzeband <blake.netzeband@gmail.com> (https://blakenetzeband.com)",
   "license": "ISC",
