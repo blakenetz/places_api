@@ -5,7 +5,8 @@
   "main": "src/index.ts",
   "type": "module",
   "scripts": {
-    "start": "tsx src/index.ts"
+    "prompt": "tsx src/prompt.ts",
+    "csv": "tsx src/csv.ts"
   },
   "keywords": [
     "denver",
